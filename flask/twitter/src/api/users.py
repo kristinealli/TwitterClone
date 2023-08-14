@@ -46,4 +46,22 @@ def delete(id: int):
         return jsonify(True) 
     except: 
         return jsonify(False) 
-        
+
+@bp.route('/<int:id>', methods=['PATCH', 'PUT'])
+def update(id): 
+    u = User.query.get_or_404(id)
+    if 'username' in request.json: 
+        if len(request.json['username']) < 3: 
+            return abort(400)
+        u.username = request.json['username']
+    if 'password' in request.json: 
+        if len(request.json['password']) < 8: 
+            return abort(400)
+        u.password = scramble(request.json['password'])
+    try: 
+        db.session.commit()
+        return jsonify(u.serialize())
+    except: 
+        return jsonify(False)
+
+
