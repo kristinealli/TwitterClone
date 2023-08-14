@@ -40,3 +40,11 @@ def delete(id: int):
         return jsonify(True) 
     except: 
         return jsonify(False) #if the tweet is not delete, return False
+        
+@bp.route('/<int:id>/liking_users', methods=['GET'])
+def liking_users(id: int):
+    t = Tweet.query.get_or_404(id)
+    result = []
+    for u in t.liking_users:
+        result.append(u.serialize())
+    return jsonify(result)
