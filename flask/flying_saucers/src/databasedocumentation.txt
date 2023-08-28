@@ -1,0 +1,151 @@
+This documentation provides an overview of the database models used in the Flying Saucer application. The application is built using Flask and SQLAlchemy for handling the database operations.
+
+## Table of Contents
+
+- [Introduction](#introduction)
+- [Database Models](#database-models)
+- [Tea](#tea)
+- [Variety](#variety)
+- [Rating](#rating)
+- [User](#user)
+- [Collection](#collection)
+- [Supplier](#supplier)
+
+## Introduction
+
+The application is designed to manage information related to various types of teas, their properties, collections created by users, and user ratings for teas. The application utilizes Flask for creating a web interface and SQLAlchemy for handling database operations.
+
+## Database Models
+
+### Tea
+
+The `Tea` model represents individual tea blends and their properties.
+
+- **tea_id**: Integer, Primary Key, Autoincremented identifier for each tea.
+- **blend_name**: String, Unique, Not Nullable, Name of the tea blend.
+- **tasting_notes**: String, Tasting notes or descriptions for the tea blend.
+- **date_of_purchase**: DateTime, Not Nullable, Date when the tea was purchased.
+- **price**: Float, Price of the tea.
+- **origin**: String, Origin of the tea.
+- **caffeine**: Boolean, Indicates if the tea contains caffeine.
+- **supplier_id**: Integer, ForeignKey to `Supplier`, Represents the supplier of the tea.
+- **variety_type**: String, ForeignKey to `Variety`, Represents the type of tea variety.
+- **brewing_temp_F**: Integer, Brewing temperature in Fahrenheit.
+- **brewing_temp_C**: Integer, Brewing temperature in Celsius.
+- **brewing_time_min**: Integer, Brewing time in minutes.
+- **tsp_per_cup**: Integer, Teaspoon per cup measurement.
+
+Relationships:
+- **collections**: Many-to-Many relationship with `Collection`, represents the collections containing the tea.
+- **varieties**: Many-to-One relationship with `Variety`, represents the variety to which the tea belongs.
+- **ratings**: One-to-Many relationship with `Rating`, represents the ratings given to the tea.
+- **suppliers**: Many-to-One relationship with `Supplier`, represents the supplier of the tea.
+
+### Variety
+
+The `Variety` model represents different types of tea varieties.
+
+- **teatype**: String, Primary Key, Unique, Not Nullable, Type of tea variety.
+- **standard_brewing_temp_F**: Integer, Standard brewing temperature in Fahrenheit.
+- **standard_brewing_temp_C**: Integer, Standard brewing temperature in Celsius.
+- **standard_brewing_time**: Integer, Standard brewing time in minutes.
+- **standard_tsp_per_cup**: Integer, Standard teaspoon per cup measurement.
+
+Relationships:
+- **teas**: One-to-Many relationship with `Tea`, represents the teas belonging to the variety.
+
+### Rating
+
+The `Rating` model represents the ratings and reviews given by users to specific tea blends.
+
+- **rating_id**: Integer, Primary Key, Autoincremented identifier for each rating.
+- **date_created**: DateTime, Not Nullable, Date when the rating was created.
+- **review_comments**: String, Comments or review text associated with the rating.
+- **ranking**: Integer, Not Nullable, Numerical ranking given to the tea.
+- **tea_id**: Integer, ForeignKey to `Tea`, Represents the tea being rated.
+- **author_user_id**: Integer, ForeignKey to `User`, Represents the user who created the rating.
+
+Relationships:
+- **tea**: Many-to-One relationship with `Tea`, represents the tea being rated.
+- **users**: Many-to-One relationship with `User`, represents the user who created the rating.
+
+### User
+
+The `User` model represents registered users of the application.
+
+- **user_id**: Integer, Primary Key, Autoincremented identifier for each user.
+- **name**: String, Not Nullable, User's name.
+- **email**: String, Unique, Not Nullable, User's email address.
+- **password**: String, Not Nullable, User's password.
+
+Relationships:
+- **collections**: One-to-Many relationship with `Collection`, represents the collections created by the user.
+- **ratings**: One-to-Many relationship with `Rating`, represents the ratings given by the user.
+
+### Collection
+
+The `Collection` model represents collections of tea blends created by users.
+
+- **collection_id**: Integer, Primary Key, Autoincremented identifier for each collection.
+- **date_created**: DateTime, Not Nullable, Date when the collection was created.
+- **user_id**: Integer, ForeignKey to `User`, Represents the user who created the collection.
+
+Relationships:
+- **teas**: Many-to-Many relationship with `Tea` through the `tea_collection_association` table, represents the teas included in the collection.
+- **users**: Many-to-One relationship with `User`, represents the user who created the collection.
+
+### Supplier
+
+The `Supplier` model represents the suppliers or sources of tea blends.
+
+- **supplier_id**: Integer, Primary Key, Autoincremented identifier for each supplier.
+- **name**: String, Not Nullable, Supplier's name.
+- **location**: String, Location of the supplier.
+- **logo**: String, URL to the supplier's logo.
+- **website**: String, URL to the supplier's website.
+
+Relationships:
+- **teas**: One-to-Many relationship with `Tea`, represents the teas supplied by the supplier.
+
+
+Tea Entity:
+Represents individual teas.
+Attributes include information about the tea such as blend name, tasting notes, date of purchase, price, origin, caffeine content, and brewing details.
+Belongs to a Supplier through a foreign key relationship.
+Belongs to a Variety through a foreign key relationship.
+Can be part of multiple Collection instances through the tea_collection_association table.
+Can have multiple associated Rating instances through the tea_rating_association table.
+Can have multiple associated Collection instances.
+Can have multiple associated Variety instances.
+
+Variety Entity:
+Represents different varieties of teas.
+Attributes include information about the variety such as tea type, standard brewing temperature, brewing time, and teaspoon per cup measurement.
+Has a one-to-many relationship with Tea, where each variety can be associated with multiple teas.
+
+Rating Entity:
+Represents ratings and reviews for teas.
+Attributes include a rating value, review comments, and the date the rating was created.
+Belongs to a Tea and a User through foreign key relationships.
+(One-to-Many): Each tea can have multiple ratings, but each rating belongs to only one tea. This is represented by the ratings relationship in the Tea table.
+
+User Entity:
+Represents users of the application.
+Attributes include user information like name, email, and password.
+Can have multiple created Collection instances.
+Can have multiple Rating instances.
+Can follow multiple Collection instances.
+(One-to-Many): Each user can give multiple ratings, but each rating belongs to only one user. This is represented by the ratings relationship in the User table.
+
+Collection Entity:
+Represents collections of teas created by users.
+Attributes include a date the collection was created.
+Belongs to a User through a foreign key relationship.
+Can contain multiple Tea instances.
+Can be followed by multiple User instances.
+(One-to-Many): Each user can create multiple collections, but each collection is created by one user. This is represented by the collections relationship in the User table.
+
+Supplier Entity:
+Represents tea suppliers.
+Attributes include supplier information like name, location, logo, and website.
+(One-to-Many): Each supplier can provide multiple teas, but each tea is associated with only one supplier. This is represented by the teas relationship in the Supplier table.

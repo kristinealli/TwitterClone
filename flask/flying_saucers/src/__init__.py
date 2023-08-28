@@ -2,6 +2,7 @@ import os
 from flask import Flask
 from flask_migrate import Migrate
 
+
 # https://flask.palletsprojects.com/en/2.0.x/patterns/appfactories/
 
 
@@ -9,7 +10,7 @@ def create_app(test_config=None):
     app = Flask(__name__, instance_relative_config=True)
     app.config.from_mapping(
         SECRET_KEY='dev',
-        SQLALCHEMY_DATABASE_URI='postgresql://postgres@localhost:5432/twitter',
+        SQLALCHEMY_DATABASE_URI='postgresql://postgres@localhost:5432/flying_saucers',
         SQLALCHEMY_TRACK_MODIFICATIONS=False,
         SQLALCHEMY_ECHO=True
     )
@@ -27,12 +28,15 @@ def create_app(test_config=None):
     except OSError:
         pass
 
-    from .models import db
-    db.init_app(app)
-    migrate = Migrate(app, db)
+    # from .models import db
+    # db.init_app(app)
+    # migrate = Migrate(app, db)
 
-    from .api import users, tweets
-    app.register_blueprint(users.bp)
-    app.register_blueprint(tweets.bp)
-
+    # from .api import teas
+    # app.register_blueprint(teas.bp)
+    # app.register_blueprint(ratings.bp)
+    # app.register_blueprint(suppliers.bp)
+    # app.register_blueprint(collections.bp)
+    # app.register_blueprint(users.bp)
+    
     return app

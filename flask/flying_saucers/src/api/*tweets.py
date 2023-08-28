@@ -1,15 +1,15 @@
 from flask import Blueprint, jsonify, abort, request
 from ..models import Tweet, User, db
 
-bp = Blueprint('tweets', __name__, url_prefix='/tweets') 
+bp = Blueprint('teas', __name__, url_prefix='/teas') 
 
 @bp.route('', methods = ['GET']) 
 # takes in a path and a list of HTTP verbs, empty path because it is already defined in blueprint
 # decorator - function will be called when the path is /tweets and the HTTP verb is GET
 def index(): 
-    tweets = Tweet.query.all() #ORM select query - get all tweets from the database
+    teas = teas.query.all() #ORM select query - get all tweets from the database
     result = [] #create an empty list named result
-    for t in tweets: #iterate through the tweets
+    for t in teas: #iterate through the tweets
         result.append(t.serialize()) #serialize each tweet and add it to the result list, dictionary
     return jsonify(result) #returnt the result list as JSON
 

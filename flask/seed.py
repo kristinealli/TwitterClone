@@ -1,93 +1,116 @@
-"""
-Populate twitter database with fake data using the SQLAlchemy ORM.
-"""
+#Populate tea database with fake information using the SQLAlchemy ORM
 
 import random
 import string
 import hashlib
 import secrets
-from faker import Faker
-from twitter.src.models import User, Tweet, likes_table, db
-from twitter.src import create_app
+from datetime import datetime, timedelta
+from faker import Faker  
+from flying_saucers.src.models import Tea, Rating, User, Collection, Supplier, Variety, tea_collection_association_table, db
+from flying_saucers.src import create_app
 
-USER_COUNT = 50
-TWEET_COUNT = 100
-LIKE_COUNT = 400
+TEA_COUNT = 40
+USER_COUNT = 5
+RATING_COUNT = 100
+COLLECTION_COUNT = 15
+MAX_TEAS_PER_COLLECTION = 40
 
-assert LIKE_COUNT <= (USER_COUNT * TWEET_COUNT)
+assert RATING_COUNT <= (TEA_COUNT * USER_COUNT)
+fake = Faker()
 
-
+#Hashed and Salted Password of Length N | 8 <= N <= 15
 def random_passhash():
-    """Get hashed and salted password of length N | 8 <= N <= 15"""
     raw = ''.join(
         random.choices(
-            string.ascii_letters + string.digits + '!@#$%&', # valid pw characters
-            k=random.randint(8, 15) # length of pw
+            string.ascii_letters + string.digits + '!@#$%&',  
+            k=random.randint(8, 15)  
         )
     )
-
     salt = secrets.token_hex(16)
-
     return hashlib.sha512((raw + salt).encode('utf-8')).hexdigest()
 
 
+#Delete all rows from database tables
 def truncate_tables():
-    """Delete all rows from database tables"""
-    db.session.execute(likes_table.delete())
-    Tweet.query.delete()
+    db.session.execute(tea_collection_association_table.delete())
+    Tea.query.delete()
+    Rating.query.delete()
     User.query.delete()
+    Collection.query.delete()
+    Supplier.query.delete()
+    Variety.query.delete()
     db.session.commit()
+    
 
-
-def main():
-    """Main driver function"""
+    
+def main(): 
     app = create_app()
     app.app_context().push()
     truncate_tables()
-    fake = Faker()
-
-    last_user = None  # save last user
-    for _ in range(USER_COUNT):
+    
+    last_tea = None
+    for _ in range (TEA_COUNT):
+        last_tea = Tea(
+            blend_name=fake.unique.word(),  # Fake unique blend names
+            tasting_notes=fake.sentence(),
+            date_of_purchase=fake.date_time_this_decade(),
+            price=random.uniform(5, 20),  # Random price between 5 and 20
+            origin=fake.word(),
+            caffeine=random.choice([True, False]),  # Random caffeine value
+            variety_type=fake.word(),
+            brewing_temp_F=random.randint(160, 212),   # Random temperature range
+            brewing_temp_C=random.randint(71, 100),   # Random temperature range
+            brewing_time_min=random.randint(2, 5),   # Random brewing time
+            tsp_per_cup=random.randint(1, 2)   # Random tsp_per_cup
+        )
+        db.session.add(last_tea)
+    db.session.commit()
+    
+    last_user = None
+    for _ in range(USER_COUNT): 
         last_user = User(
-            username=fake.unique.first_name().lower() + str(random.randint(1,150)),
-            password=random_passhash()
+            username = fake.unique.first_name().lower() + str(random.randint(1,150)),
+            password = random_passhash()
         )
         db.session.add(last_user)
-
-    # insert users
     db.session.commit()
-
-    last_tweet = None  # save last tweet
-    for _ in range(TWEET_COUNT):
-        last_tweet = Tweet(
-            content=fake.sentence(),
-            user_id=random.randint(last_user.id - USER_COUNT + 1, last_user.id)
+    
+    last_rating = None
+    for _ in range (RATING_COUNT): 
+        last_rating = Rating(
+            date_created = fake.date_time_this_decade(),
+            review_comments = fake.sentence(),
+            ranking = random.randint(1,5),
+            tea_id = random.randint(1, TEA_COUNT),
+            author_user_id = random.randint(1, USER_COUNT)
         )
-        db.session.add(last_tweet)
-
-    # insert tweets
+        db.session.add(last_rating)
     db.session.commit()
-
-    user_tweet_pairs = set()
-    while len(user_tweet_pairs) < LIKE_COUNT:
-
-        candidate = (
-            random.randint(last_user.id - USER_COUNT + 1, last_user.id),
-            random.randint(last_tweet.id - TWEET_COUNT + 1, last_tweet.id)
+    
+    last_collection = None
+    collections = []
+    for _ in range(COLLECTION_COUNT): 
+        last_collection = Collection(
+            collection_id = fake.unique.word(),
+            date_created = fake.date_time_this_decade(),
+            user_id = random.randint(1, USER_COUNT)
         )
-
-        if candidate in user_tweet_pairs:
-            continue  # pairs must be unique
-
-        user_tweet_pairs.add(candidate)
-
-    new_likes = [{"user_id": pair[0], "tweet_id": pair[1]} for pair in list(user_tweet_pairs)]
-    insert_likes_query = likes_table.insert().values(new_likes)
-    db.session.execute(insert_likes_query)
-
-    # insert likes
+        collections.append(last_collection)
+        db.session.add(last_collection)
     db.session.commit()
+    
+    tea_collection_groups = set()
+    for collection in collections:
+        num_teas = random.randint(1, MAX_TEAS_PER_COLLECTION)
+        selected_teas = random.sample(range(1, TEA_COUNT + 1), num_teas)
+        for tea_id in selected_teas:
+            tea_collection_groups.add(
+                (tea_id, collection.user_id, collection.id))
 
-
-# run script
+    new_collection = [{"user_id": value[1], "tea_id": value[0],"collection_id": value[2]} for value in tea_collection_groups]
+    insert_collection = tea_collection_association_table.insert().values(new_collection)
+    db.session.execute(insert_collection)
+    db.session.commit()
+        
 main()
+    
